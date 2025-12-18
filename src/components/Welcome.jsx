@@ -7,12 +7,16 @@ const FONT_WEIGHTS = {
   title: { min: 400, max: 900, default: 400 },
 };
 
+// Larger value -> wider spread (less intensity falloff).
+// Tune this constant to adjust how quickly the hover effect decays.
+const HOVER_INTENSITY_DENOMINATOR = 20000;
+
 const renderText = (text, className, baseWeight = 400) => {
   return [...text].map((char, index) => (
     <span
-      ley={index}
+      key={index}
       className={className}
-      style={{ fontVariationSettings: `'wght ${baseWeight}` }}
+      style={{ fontVariationSettings: `'wght' ${baseWeight}` }}
     >
       {char === " " ? "\u00A0" : char}
     </span>
@@ -37,7 +41,7 @@ const renderText = (text, className, baseWeight = 400) => {
  *   attached event listeners, or undefined if no container was provided.
  */
 const setupTextHover = (container, type) => {
-  if (!container) return;
+  if (!container) return () => {};
 
   const letters = container.querySelectorAll("span");
   const { min, max, default: base } = FONT_WEIGHTS[type];
@@ -56,7 +60,9 @@ const setupTextHover = (container, type) => {
     letters.forEach((letter) => {
       const { left: l, width: w } = letter.getBoundingClientRect();
       const distance = Math.abs(mouseX - (l - left + w / 2));
-      const intensity = Math.exp(-(distance ** 2) / 20000);
+      const intensity = Math.exp(
+        -(distance ** 2) / HOVER_INTENSITY_DENOMINATOR
+      );
 
       animateLetter(letter, min + (max - min) * intensity);
     });
@@ -86,8 +92,8 @@ const Welcome = () => {
     const subtitleCleanup = setupTextHover(subTitleRef.current, "subtitle");
 
     return () => {
-      titleCleanup();
-      subtitleCleanup();
+      titleCleanup && titleCleanup();
+      subtitleCleanup && subtitleCleanup();
     };
   }, []);
 
