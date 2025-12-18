@@ -19,6 +19,23 @@ const renderText = (text, className, baseWeight = 400) => {
   ));
 };
 
+/**
+ * Sets up a hover-based variable font weight animation for all span elements
+ * inside the given container using GSAP.
+ *
+ * On mouse move, each letter's weight is adjusted based on its horizontal
+ * distance from the cursor. The intensity of the effect is computed using an
+ * exponential falloff function of the squared distance, and then mapped
+ * between the configured minimum and maximum weights for the given text type.
+ * On mouse leave, all letters are smoothly animated back to their base weight.
+ *
+ * @param {HTMLElement | null} container - The DOM element that wraps the text
+ *   spans to animate. If null or undefined, no listeners are attached.
+ * @param {"title" | "subtitle"} type - The text style key used to look up
+ *   font weight bounds in FONT_WEIGHTS.
+ * @returns {() => void | undefined} A cleanup function that removes the
+ *   attached event listeners, or undefined if no container was provided.
+ */
 const setupTextHover = (container, type) => {
   if (!container) return;
 
