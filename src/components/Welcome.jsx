@@ -37,8 +37,8 @@ const renderText = (text, className, baseWeight = 400) => {
  *   spans to animate. If null or undefined, no listeners are attached.
  * @param {"title" | "subtitle"} type - The text style key used to look up
  *   font weight bounds in FONT_WEIGHTS.
- * @returns {() => void | undefined} A cleanup function that removes the
- *   attached event listeners, or undefined if no container was provided.
+ * @returns {() => void} A cleanup function that removes the attached event
+ *   listeners (a no-op if no container was provided).
  */
 const setupTextHover = (container, type) => {
   if (!container) return () => {};
@@ -53,18 +53,23 @@ const setupTextHover = (container, type) => {
       fontVariationSettings: `'wght' ${weight}`,
     });
   };
-  const handleMouseMove = (e) => {
-    const { left } = container.getBoundingClientRect();
-    const mouseX = e.clientX - left;
+  // Cache letter positions for better performance
+  const letterPositions = Array.from(letters).map((letter) => {
+    const { left: l, width: w } = letter.getBoundingClientRect();
+    return { element: letter, centerX: l + w / 2 };
+  });
+  const containerLeft = container.getBoundingClientRect().left;
 
-    letters.forEach((letter) => {
-      const { left: l, width: w } = letter.getBoundingClientRect();
-      const distance = Math.abs(mouseX - (l - left + w / 2));
+  const handleMouseMove = (e) => {
+    const mouseX = e.clientX;
+
+    letterPositions.forEach(({ element, centerX }) => {
+      const distance = Math.abs(mouseX - centerX);
       const intensity = Math.exp(
         -(distance ** 2) / HOVER_INTENSITY_DENOMINATOR
       );
 
-      animateLetter(letter, min + (max - min) * intensity);
+      animateLetter(element, min + (max - min) * intensity);
     });
   };
 
@@ -85,21 +90,21 @@ const setupTextHover = (container, type) => {
 
 const Welcome = () => {
   const titleRef = useRef(null);
-  const subTitleRef = useRef(null);
+  const subtitleRef = useRef(null);
 
   useGSAP(() => {
     const titleCleanup = setupTextHover(titleRef.current, "title");
-    const subtitleCleanup = setupTextHover(subTitleRef.current, "subtitle");
+    const subtitleCleanup = setupTextHover(subtitleRef.current, "subtitle");
 
     return () => {
-      titleCleanup && titleCleanup();
-      subtitleCleanup && subtitleCleanup();
+      titleCleanup();
+      subtitleCleanup();
     };
   }, []);
 
   return (
     <section id="welcome">
-      <p ref={subTitleRef}>
+      <p ref={subtitleRef}>
         {renderText(
           "Hey, I'm Vishnu! Welcome to my",
           "text-3xl font-georama",
