@@ -58,7 +58,6 @@ const setupTextHover = (container, type) => {
     const { left: l, width: w } = letter.getBoundingClientRect();
     return { element: letter, centerX: l + w / 2 };
   });
-  const containerLeft = container.getBoundingClientRect().left;
 
   const handleMouseMove = (e) => {
     const mouseX = e.clientX;
