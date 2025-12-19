@@ -11,13 +11,26 @@ const Dock = () => {
   useGSAP(() => {
     const dock = dockRef.current;
     if (!dock) return;
-    const icons = dock.querySelectorAll(".dock-icon");
+
+    let icons = dock.querySelectorAll(".dock-icon");
+    let centers = [];
+    let dockLeft = 0;
+
+    const computePositions = () => {
+      const rect = dock.getBoundingClientRect();
+      dockLeft = rect.left;
+      icons = dock.querySelectorAll(".dock-icon");
+      centers = Array.from(icons).map((icon) => {
+        const r = icon.getBoundingClientRect();
+        return r.left - dockLeft + r.width / 2;
+      });
+    };
+
+    computePositions();
 
     const animateIcons = (mouseX) => {
-      const { left } = dock.getBoundingClientRect();
-      icons.forEach((icon) => {
-        const { left: iconLeft, width } = icon.getBoundingClientRect();
-        const center = iconLeft - left + width / 2;
+      icons.forEach((icon, i) => {
+        const center = centers[i] ?? 0;
         const distance = Math.abs(mouseX - center);
         const intensity = Math.exp(-(distance ** 2.5) / 20000);
         gsap.to(icon, {
@@ -28,9 +41,9 @@ const Dock = () => {
         });
       });
     };
+
     const handleMouseMove = (e) => {
-      const { left } = dock.getBoundingClientRect();
-      animateIcons(e.clientX - left);
+      animateIcons(e.clientX - dockLeft);
     };
 
     const resetIcons = () =>
@@ -42,16 +55,23 @@ const Dock = () => {
           ease: "power1.out",
         })
       );
+
+    const ro = new ResizeObserver(computePositions);
+    ro.observe(dock);
+    window.addEventListener("resize", computePositions);
+
     dock.addEventListener("mousemove", handleMouseMove);
     dock.addEventListener("mouseleave", resetIcons);
 
     return () => {
       dock.removeEventListener("mousemove", handleMouseMove);
       dock.removeEventListener("mouseleave", resetIcons);
+      window.removeEventListener("resize", computePositions);
+      ro.disconnect();
     };
   }, []);
 
-  const togggleApp = (app) => {};
+  const toggleApp = (app) => {};
   return (
     <section id="dock">
       <div ref={dockRef} className="dock-container">
@@ -65,7 +85,7 @@ const Dock = () => {
               data-tooltip-content={name}
               data-tooltip-delay-show={150}
               disabled={!canOpen}
-              onClick={() => togggleApp({ id, canOpen })}
+              onClick={() => toggleApp({ id, canOpen })}
             >
               <img
                 src={`/images/${icon}`}
