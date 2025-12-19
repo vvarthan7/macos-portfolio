@@ -5,7 +5,15 @@ const WindowControls = ({ target }) => {
 
   return (
     <div id="window-controls">
-      <div className="close" onClick={() => closeWindow(target)} />
+      <div
+        className="close"
+        role="button"
+        aria-label="Close window"
+        onClick={() => closeWindow(target)}
+        onKeyDown={(e) =>
+          (e.key === "Enter" || e.key === " ") && closeWindow(target)
+        }
+      />
       <div className="minimize" />
       <div className="maximize" />
     </div>
